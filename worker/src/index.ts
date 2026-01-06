@@ -104,6 +104,14 @@ function randomBase64Url(bytes: number): string {
   return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
+function randomHex(bytes: number): string {
+  const arr = new Uint8Array(bytes);
+  crypto.getRandomValues(arr);
+  let out = "";
+  for (const b of arr) out += b.toString(16).padStart(2, "0");
+  return out;
+}
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -175,6 +183,17 @@ function getUrls(env: Env): { authorizeUrl: string; tokenUrl: string; redirectUr
   }
 
   return { authorizeUrl, tokenUrl, redirectUri };
+}
+
+function encodeScopesForSmartThings(scopes: string): string {
+  // SmartThings examples show scopes like `r:devices:* x:devices:*`.
+  // Some OAuth servers are surprisingly picky about percent-encoded ':' and '*',
+  // so we keep them literal and only encode separators/spaces as '%20'.
+  return scopes
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((scope) => encodeURIComponent(scope).replace(/%3A/gi, ":").replace(/%2A/gi, "*"))
+    .join("%20");
 }
 
 async function exchangeCodeForTokens(
@@ -306,23 +325,50 @@ export default {
 
     // Create a pairing session and return the authorize URL.
     if (req.method === "POST" && url.pathname === "/v1/pair") {
-      const pairId = randomBase64Url(18);
+      // Use a hex-only state to avoid any overly strict OAuth parsers.
+      const pairId = randomHex(18);
       const { authorizeUrl, redirectUri } = getUrls(env);
 
-      const scopes = (env.ST_SCOPES || "r:devices:* x:devices:*").trim();
+      // Optional debugging controls:
+      // - /v1/pair?no_scope=1 -> omit scope param entirely
+      // - /v1/pair?scopes=... -> override requested scopes (space-delimited)
+      const noScope = url.searchParams.get("no_scope") === "1";
+      const scopesOverride = url.searchParams.get("scopes");
+      const scopes = (scopesOverride ?? env.ST_SCOPES ?? "r:devices:* x:devices:*").trim();
       const state = pairId;
 
+      const encodedScopes = encodeScopesForSmartThings(scopes);
+
+      // Build the authorize URL query string manually.
+      // Reason: URLSearchParams encodes spaces as '+', but some OAuth servers are strict and expect '%20'.
+      // Also, encoding '*' as '%2A' avoids edge cases with overly strict parsers.
       const authUrl = new URL(authorizeUrl);
-      authUrl.searchParams.set("response_type", "code");
-      authUrl.searchParams.set("client_id", env.ST_CLIENT_ID);
-      authUrl.searchParams.set("redirect_uri", redirectUri);
-      authUrl.searchParams.set("scope", scopes);
-      authUrl.searchParams.set("state", state);
+      const queryParts = [
+        `response_type=code`,
+        `client_id=${encodeURIComponent(env.ST_CLIENT_ID)}`,
+        `redirect_uri=${encodeURIComponent(redirectUri)}`,
+        ...(noScope ? [] : [`scope=${encodedScopes}`]),
+        `state=${encodeURIComponent(state)}`,
+      ];
+      authUrl.search = queryParts.join("&");
 
       const record: PairRecord = { status: "pending", createdAt: nowIso() };
       await env.AUTH_KV.put(`pair:${pairId}`, JSON.stringify(record), { expirationTtl: 15 * 60 });
 
-      return respond(json({ pairId, authorizationUrl: authUrl.toString(), expiresInSeconds: 15 * 60 }));
+      return respond(
+        json({
+          pairId,
+          authorizationUrl: authUrl.toString(),
+          expiresInSeconds: 15 * 60,
+          debug: {
+            authorizeUrl,
+            redirectUri,
+            scopes,
+            noScope,
+            clientId: env.ST_CLIENT_ID,
+          },
+        }),
+      );
     }
 
     // OAuth callback from SmartThings.
@@ -331,6 +377,8 @@ export default {
       const state = url.searchParams.get("state");
       const oauthError = url.searchParams.get("error");
       const oauthErrorDescription = url.searchParams.get("error_description");
+
+      const rawQuery = url.search ? url.search.slice(1) : "";
 
       if (oauthError) {
         const msg = `SmartThings returned an OAuth error: ${oauthError}${oauthErrorDescription ? ` - ${oauthErrorDescription}` : ""}`;
@@ -350,7 +398,10 @@ export default {
         return respond(
           htmlPage(
             "SmartThings Auth - Error",
-            `<h1>Authentication failed</h1><p>${escapeHtml(msg)}</p><p>Return to Raycast and try again.</p>`,
+            `<h1>Authentication failed</h1>
+             <p>${escapeHtml(msg)}</p>
+             ${rawQuery ? `<h2>Callback Query</h2><pre>${escapeHtml(rawQuery)}</pre>` : ""}
+             <p>Return to Raycast and try again.</p>`,
           ),
         );
       }

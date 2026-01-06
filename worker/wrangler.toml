@@ -15,11 +15,11 @@ preview_id = "27931f17bf7b4d73ac29540e3f29162e"
 
 [vars]
 # SmartThings OAuth
-ST_CLIENT_ID = "19a50664-84e9-4e4c-bb50-58ba5e3a2cfe"
+ST_CLIENT_ID = "2b7eda88-149c-4041-a62d-1624c6fb63e4"
 # Use api.smartthings.com for the browser-based authorization flow.
 ST_AUTHORIZATION_URL = "https://api.smartthings.com/oauth/authorize"
 # ST_TOKEN_URL = "https://auth-global.api.smartthings.com/oauth/token" # optional override
-# ST_SCOPES = "r:devices:* x:devices:*"
+ST_SCOPES = "r:devices:* x:devices:*"
 PUBLIC_BASE_URL = "https://smartthings-auth-worker.emirkaynar.workers.dev" # used to build redirect_uri
 
 # Secrets (set via `wrangler secret put`)
