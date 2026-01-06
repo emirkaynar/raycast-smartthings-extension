@@ -1,6 +1,8 @@
 import {
   Action,
   ActionPanel,
+  Color,
+  Detail,
   Icon,
   List,
   LocalStorage,
@@ -40,6 +42,7 @@ type SmartThingsDevice = {
   components?: Array<{
     id: string;
     capabilities?: Array<{ id: string }>;
+    categories?: Array<{ name: string; categoryType?: string }>;
   }>;
 };
 
@@ -120,6 +123,17 @@ async function listSmartThingsDevices(accessToken: string): Promise<SmartThingsD
   return data.items ?? [];
 }
 
+async function getSmartThingsDevice(accessToken: string, deviceId: string): Promise<any> {
+  const url = `https://api.smartthings.com/v1/devices/${encodeURIComponent(deviceId)}`;
+  return fetchJson<any>(url, {
+    method: "GET",
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      accept: "application/json",
+    },
+  });
+}
+
 async function getDeviceStatus(accessToken: string, deviceId: string): Promise<DeviceStatusResponse> {
   const url = `https://api.smartthings.com/v1/devices/${encodeURIComponent(deviceId)}/status`;
   return fetchJson<DeviceStatusResponse>(url, {
@@ -140,43 +154,163 @@ function getPathValue(obj: any, path: string[]): unknown {
   return cur;
 }
 
-function formatDeviceStatus(
-  device: SmartThingsDevice,
-  status: DeviceStatusResponse,
-): { text: string; switchState?: "on" | "off" } {
-  const main = status.components?.main;
-  if (!main) return { text: "" };
+type DeviceUiInfo = {
+  switchState?: "on" | "off";
+  level?: number;
+  colorTemperature?: number;
+  hue?: number;
+  saturation?: number;
+  presence?: "present" | "not present";
+};
 
-  const parts: string[] = [];
-  let switchState: "on" | "off" | undefined;
+function getDeviceCategoryName(device: SmartThingsDevice): string | undefined {
+  const components = device.components ?? [];
+  const main = components.find((c) => c.id === "main");
+  const orderedComponents = main ? [main, ...components.filter((c) => c !== main)] : components;
+
+  const categories: Array<{ name: string; categoryType?: string }> = [];
+  for (const component of orderedComponents) {
+    for (const cat of component.categories ?? []) categories.push(cat);
+  }
+
+  const user = categories.find((c) => c.categoryType === "user")?.name;
+  if (user) return user;
+
+  const manufacturer = categories.find((c) => c.categoryType === "manufacturer")?.name;
+  if (manufacturer) return manufacturer;
+
+  return categories[0]?.name;
+}
+
+function getDeviceKind(device: SmartThingsDevice): "light" | "television" | "presence" | "switch" | "other" {
+  const category = getDeviceCategoryName(device);
+  if (category === "Light") return "light";
+  if (category === "Television") return "television";
+  if (category === "MobilePresence" || category === "PresenceSensor" || category === "Mobile") return "presence";
+  if (deviceHasCapability(device, "switch")) return "switch";
+  return "other";
+}
+
+function iconForKind(kind: "light" | "television" | "presence" | "switch" | "other"): Icon {
+  switch (kind) {
+    case "light":
+      return Icon.LightBulb;
+    case "television":
+      return Icon.Monitor;
+    case "presence":
+      return Icon.Livestream;
+    case "switch":
+      return Icon.Switch;
+    default:
+      return Icon.Dot;
+  }
+}
+
+function clamp(n: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, n));
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const rr = clamp(Math.round(r), 0, 255).toString(16).padStart(2, "0");
+  const gg = clamp(Math.round(g), 0, 255).toString(16).padStart(2, "0");
+  const bb = clamp(Math.round(b), 0, 255).toString(16).padStart(2, "0");
+  return `#${rr}${gg}${bb}`;
+}
+
+function hsvToHex(hueDeg: number, saturation01: number, value01: number): string {
+  const h = ((hueDeg % 360) + 360) % 360;
+  const s = clamp(saturation01, 0, 1);
+  const v = clamp(value01, 0, 1);
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = v - c;
+
+  let r1 = 0;
+  let g1 = 0;
+  let b1 = 0;
+  if (h < 60) {
+    r1 = c;
+    g1 = x;
+  } else if (h < 120) {
+    r1 = x;
+    g1 = c;
+  } else if (h < 180) {
+    g1 = c;
+    b1 = x;
+  } else if (h < 240) {
+    g1 = x;
+    b1 = c;
+  } else if (h < 300) {
+    r1 = x;
+    b1 = c;
+  } else {
+    r1 = c;
+    b1 = x;
+  }
+
+  return rgbToHex((r1 + m) * 255, (g1 + m) * 255, (b1 + m) * 255);
+}
+
+function kelvinToHex(kelvin: number): string {
+  const temp = clamp(kelvin, 1000, 40000) / 100;
+
+  let red: number;
+  let green: number;
+  let blue: number;
+
+  if (temp <= 66) {
+    red = 255;
+    green = 99.4708025861 * Math.log(temp) - 161.1195681661;
+    blue = temp <= 19 ? 0 : 138.5177312231 * Math.log(temp - 10) - 305.0447927307;
+  } else {
+    red = 329.698727446 * Math.pow(temp - 60, -0.1332047592);
+    green = 288.1221695283 * Math.pow(temp - 60, -0.0755148492);
+    blue = 255;
+  }
+
+  return rgbToHex(red, green, blue);
+}
+
+function formatDeviceUiInfo(device: SmartThingsDevice, status: DeviceStatusResponse): DeviceUiInfo {
+  const main = status.components?.main;
+  if (!main) return {};
+
+  const info: DeviceUiInfo = {};
 
   if (deviceHasCapability(device, "switch")) {
     const sw = getPathValue(main, ["switch", "switch", "value"]);
     if (sw === "on" || sw === "off") {
-      switchState = sw;
-      parts.push(sw === "on" ? "On" : "Off");
+      info.switchState = sw;
     }
   }
 
   if (deviceHasCapability(device, "switchLevel")) {
     const level = getPathValue(main, ["switchLevel", "level", "value"]);
-    if (typeof level === "number") parts.push(`${level}%`);
+    if (typeof level === "number") info.level = level;
   }
 
   if (deviceHasCapability(device, "colorTemperature")) {
     const ct = getPathValue(main, ["colorTemperature", "colorTemperature", "value"]);
-    if (typeof ct === "number") parts.push(`${ct}K`);
+    if (typeof ct === "number") info.colorTemperature = ct;
   }
 
   if (deviceHasCapability(device, "colorControl")) {
     const hue = getPathValue(main, ["colorControl", "hue", "value"]);
     const sat = getPathValue(main, ["colorControl", "saturation", "value"]);
     if (typeof hue === "number" && typeof sat === "number") {
-      parts.push(`H${Math.round(hue)} S${Math.round(sat)}`);
+      info.hue = hue;
+      info.saturation = sat;
     }
   }
 
-  return { text: parts.join(" · "), switchState };
+  if (deviceHasCapability(device, "presenceSensor")) {
+    const presence = getPathValue(main, ["presenceSensor", "presence", "value"]);
+    if (presence === "present" || presence === "not present") {
+      info.presence = presence;
+    }
+  }
+
+  return info;
 }
 
 async function mapWithConcurrency<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
@@ -204,6 +338,73 @@ function deviceHasCapability(device: SmartThingsDevice, capabilityId: string): b
     }
   }
   return false;
+}
+
+function formatAsPrettyJson(obj: unknown): string {
+  try {
+    return JSON.stringify(obj, null, 2);
+  } catch {
+    return String(obj);
+  }
+}
+
+function DeviceRawDataDetail(props: { accessToken: string; device: SmartThingsDevice }) {
+  const { accessToken, device } = props;
+
+  const { data, isLoading, error, revalidate } = useCachedPromise(
+    async (token: string, deviceId: string) => {
+      const [fullDevice, status] = await Promise.all([
+        getSmartThingsDevice(token, deviceId),
+        getDeviceStatus(token, deviceId),
+      ]);
+      return { fullDevice, status };
+    },
+    [accessToken, device.deviceId],
+    { keepPreviousData: true },
+  );
+
+  const title = device.label || device.name || device.deviceId;
+  const deviceJson = formatAsPrettyJson(data?.fullDevice);
+  const statusJson = formatAsPrettyJson(data?.status);
+  const listItemJson = formatAsPrettyJson(device);
+
+  const combinedJson =
+    JSON.stringify(
+      {
+        deviceId: device.deviceId,
+        device: data?.fullDevice,
+        status: data?.status,
+        listItem: device,
+      },
+      null,
+      2,
+    ) || "";
+
+  const markdown =
+    `# ${title}\n\n` +
+    `**Device ID:** ${device.deviceId}\n\n` +
+    (error ? `## Error\n\n\`${String(error)}\`\n\n` : "") +
+    `## Device (GET /v1/devices/${device.deviceId})\n\n` +
+    `\`\`\`json\n${deviceJson}\n\`\`\`\n\n` +
+    `## Status (GET /v1/devices/${device.deviceId}/status)\n\n` +
+    `\`\`\`json\n${statusJson}\n\`\`\`\n\n` +
+    `## List Item (GET /v1/devices)\n\n` +
+    `\`\`\`json\n${listItemJson}\n\`\`\`\n`;
+
+  return (
+    <Detail
+      isLoading={isLoading}
+      markdown={markdown}
+      actions={
+        <ActionPanel>
+          <Action title="Refresh" icon={Icon.RotateClockwise} onAction={revalidate} />
+          <Action.CopyToClipboard title="Copy Device JSON" content={deviceJson} />
+          <Action.CopyToClipboard title="Copy Status JSON" content={statusJson} />
+          <Action.CopyToClipboard title="Copy All (Combined)" content={combinedJson} />
+        </ActionPanel>
+      }
+    />
+  );
 }
 
 async function getSwitchStatus(accessToken: string, deviceId: string): Promise<"on" | "off" | "unknown"> {
@@ -285,21 +486,18 @@ export default function ListDevicesCommand() {
 
     const devices = await listSmartThingsDevices(accessToken);
 
-    const deviceStatusById: Record<string, string> = {};
-    const deviceSwitchStateById: Record<string, "on" | "off"> = {};
+    const deviceUiById: Record<string, DeviceUiInfo> = {};
     await mapWithConcurrency(devices, 6, async (device) => {
       try {
         const status = await getDeviceStatus(accessToken, device.deviceId);
-        const formatted = formatDeviceStatus(device, status);
-        if (formatted.text) deviceStatusById[device.deviceId] = formatted.text;
-        if (formatted.switchState) deviceSwitchStateById[device.deviceId] = formatted.switchState;
+        deviceUiById[device.deviceId] = formatDeviceUiInfo(device, status);
       } catch {
         // Ignore per-device status failures.
       }
       return undefined;
     });
 
-    return { devices, accessToken, deviceStatusById, deviceSwitchStateById };
+    return { devices, accessToken, deviceUiById };
   }, [brokerBaseUrl]);
 
   const { data, isLoading, error, revalidate } = useCachedPromise(loadDevices, [], {
@@ -308,8 +506,7 @@ export default function ListDevicesCommand() {
 
   const devices = data?.devices ?? [];
   const accessToken = data?.accessToken;
-  const deviceStatusById = data?.deviceStatusById ?? {};
-  const deviceSwitchStateById = data?.deviceSwitchStateById ?? {};
+  const deviceUiById = data?.deviceUiById ?? {};
 
   return (
     <List isLoading={isLoading} searchBarPlaceholder="Search devices…">
@@ -323,17 +520,62 @@ export default function ListDevicesCommand() {
 
       {devices.map((device) => {
         const title = device.label || device.name || device.deviceId;
+        const kind = getDeviceKind(device);
+        const isLight = kind === "light";
         const isSwitch = deviceHasCapability(device, "switch");
-        const subtitle = deviceStatusById[device.deviceId] || device.deviceId;
-        const cachedSwitchState = deviceSwitchStateById[device.deviceId];
+        const ui = deviceUiById[device.deviceId] || {};
+        const cachedSwitchState = ui.switchState;
         const toggleTitle =
           cachedSwitchState === "on" ? "Turn Off" : cachedSwitchState === "off" ? "Turn On" : "Toggle Switch";
+
+        const subtitle =
+          cachedSwitchState === "on" && isLight && typeof ui.level === "number" ? `${Math.round(ui.level)}%` : "";
+
+        const accessoryText =
+          cachedSwitchState === "on"
+            ? "On"
+            : cachedSwitchState === "off"
+              ? "Off"
+              : ui.presence === "present"
+                ? "Present"
+                : ui.presence === "not present"
+                  ? "Away"
+                  : "";
+
+        const iconTint = (() => {
+          if (!isLight) return Color.SecondaryText;
+          if (cachedSwitchState !== "on") return Color.SecondaryText;
+
+          // RGB-capable: tint to current hue/sat (and level, if present)
+          if (
+            deviceHasCapability(device, "colorControl") &&
+            typeof ui.hue === "number" &&
+            typeof ui.saturation === "number"
+          ) {
+            const hueDeg = clamp(ui.hue, 0, 100) * 3.6;
+            const sat01 = clamp(ui.saturation, 0, 100) / 100;
+            // If saturation is near-zero, treat as white and fall through to temperature (if available).
+            if (sat01 >= 0.08) {
+              return hsvToHex(hueDeg, sat01, 1);
+            }
+          }
+
+          // Warmth-only (or near-white RGB): tint based on color temperature
+          if (deviceHasCapability(device, "colorTemperature") && typeof ui.colorTemperature === "number") {
+            return kelvinToHex(ui.colorTemperature);
+          }
+
+          return Color.Yellow;
+        })();
+
+        const iconSource = iconForKind(kind);
         return (
           <List.Item
             key={device.deviceId}
             title={title}
             subtitle={subtitle}
-            icon={isSwitch ? Icon.LightBulb : Icon.Dot}
+            accessories={accessoryText ? [{ text: accessoryText }] : []}
+            icon={{ source: iconSource, tintColor: iconTint }}
             actions={
               <ActionPanel>
                 {isSwitch && accessToken ? (
@@ -352,6 +594,15 @@ export default function ListDevicesCommand() {
                 ) : null}
 
                 <Action title="Refresh" icon={Icon.RotateClockwise} onAction={revalidate} />
+
+                {accessToken ? (
+                  <Action.Push
+                    title="Show Raw Device Data"
+                    icon={Icon.Bug}
+                    target={<DeviceRawDataDetail accessToken={accessToken} device={device} />}
+                  />
+                ) : null}
+
                 <Action
                   title="Reconnect"
                   icon={Icon.Link}
