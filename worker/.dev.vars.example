@@ -1,0 +1,18 @@
+# Wrangler local dev variables
+#
+# Copy this file to `.dev.vars` (same folder) and fill in values.
+# `.dev.vars` is gitignored.
+#
+# For basic smoke tests of /health and /v1/pair you only need ST_CLIENT_ID + PUBLIC_BASE_URL.
+# For a full OAuth callback test you must also set ST_CLIENT_SECRET + TOKEN_ENC_KEY_B64.
+
+# SmartThings OAuth
+ST_CLIENT_ID="YOUR_SMARTTHINGS_CLIENT_ID"
+# ST_CLIENT_SECRET="YOUR_SMARTTHINGS_CLIENT_SECRET"
+
+# Used to build the redirect URI as ${PUBLIC_BASE_URL}/v1/callback
+# For wrangler dev the local URL is typically http://localhost:8787
+PUBLIC_BASE_URL="http://localhost:8787"
+
+# Base64-encoded 32-byte key (AES-GCM) used to encrypt stored tokens
+# TOKEN_ENC_KEY_B64="BASE64_32_BYTE_KEY"

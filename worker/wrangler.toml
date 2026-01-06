@@ -1,0 +1,27 @@
+name = "smartthings-auth-worker"
+main = "src/index.ts"
+compatibility_date = "2025-07-18"
+tsconfig = "./tsconfig.json"
+
+# Bindings are set up in the Cloudflare dashboard or via `wrangler`.
+# You will need a KV namespace binding named `AUTH_KV`.
+
+[[kv_namespaces]]
+binding = "AUTH_KV"
+# Placeholder IDs to enable local `wrangler dev --local` smoke tests.
+# For `wrangler deploy`, replace with real IDs from `wrangler kv:namespace create` or bind in the Cloudflare dashboard.
+id = "ebd60305f4a045198a92fc18810e9302"
+preview_id = "27931f17bf7b4d73ac29540e3f29162e"
+
+[vars]
+# SmartThings OAuth
+ST_CLIENT_ID = "19a50664-84e9-4e4c-bb50-58ba5e3a2cfe"
+# Use api.smartthings.com for the browser-based authorization flow.
+ST_AUTHORIZATION_URL = "https://api.smartthings.com/oauth/authorize"
+# ST_TOKEN_URL = "https://auth-global.api.smartthings.com/oauth/token" # optional override
+# ST_SCOPES = "r:devices:* x:devices:*"
+PUBLIC_BASE_URL = "https://smartthings-auth-worker.emirkaynar.workers.dev" # used to build redirect_uri
+
+# Secrets (set via `wrangler secret put`)
+# ST_CLIENT_SECRET
+# TOKEN_ENC_KEY_B64
