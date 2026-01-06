@@ -10,8 +10,18 @@
       "name": "list-devices",
       "title": "List Devices",
       "description": "Authenticate with SmartThings and control your smart home devices.",
-      "mode": "no-view",
-      "subtitle": "List and control SmartThings devices"
+      "mode": "view",
+      "subtitle": "List and control SmartThings devices",
+      "preferences": [
+        {
+          "name": "brokerBaseUrl",
+          "title": "Auth Broker Base URL",
+          "description": "Base URL of the Cloudflare Worker auth broker.",
+          "type": "textfield",
+          "required": true,
+          "default": "https://smartthings-auth-worker.emirkaynar.workers.dev"
+        }
+      ]
     }
   ],
   "dependencies": {
