@@ -7,11 +7,11 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "list-devices",
-      "title": "List Devices",
+      "name": "control-devices",
+      "title": "Control Devices",
       "description": "Authenticate with SmartThings and control your smart home devices.",
       "mode": "view",
-      "subtitle": "List and control SmartThings devices",
+      "subtitle": "SmartThings Home Control",
       "preferences": [
         {
           "name": "brokerBaseUrl",

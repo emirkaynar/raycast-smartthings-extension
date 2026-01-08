@@ -293,36 +293,6 @@ export default {
       return respond(json({ ok: true, time: nowIso() }));
     }
 
-    // Minimal SmartThings Webhook SmartApp lifecycle endpoint.
-    // SmartThings will call this URL to validate the webhook (PING/CONFIRMATION) when creating/updating a WEBHOOK_SMART_APP.
-    if (req.method === "POST" && url.pathname === "/st/lifecycle") {
-      let payload: any;
-      try {
-        payload = await req.json();
-      } catch {
-        return respond(badRequest("Invalid JSON"));
-      }
-
-      const lifecycle = String(payload?.lifecycle || "").toUpperCase();
-
-      if (lifecycle === "PING") {
-        const challenge = payload?.pingData?.challenge;
-        if (!challenge || typeof challenge !== "string") {
-          return respond(badRequest("Missing pingData.challenge"));
-        }
-        return respond(json({ pingData: { challenge } }));
-      }
-
-      if (lifecycle === "CONFIRMATION") {
-        const base = (env.PUBLIC_BASE_URL || url.origin).replace(/\/+$/g, "");
-        return respond(json({ targetUrl: `${base}/st/lifecycle` }));
-      }
-
-      // For provisioning our OAuth client, we don't need a fully functional SmartApp.
-      // Return 200 so SmartThings doesn't treat the webhook as completely broken.
-      return respond(json({ ok: true }));
-    }
-
     // Create a pairing session and return the authorize URL.
     if (req.method === "POST" && url.pathname === "/v1/pair") {
       // Use a hex-only state to avoid any overly strict OAuth parsers.
