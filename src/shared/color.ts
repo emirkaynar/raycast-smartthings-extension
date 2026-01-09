@@ -60,3 +60,45 @@ export function kelvinToHex(kelvin: number): string {
 
   return rgbToHex(red, green, blue);
 }
+
+export function hexToRgb(hex: string): { r: number; g: number; b: number } | undefined {
+  const cleaned = hex.trim().replace(/^#/, "");
+  if (!/^[0-9a-fA-F]{6}$/.test(cleaned)) return undefined;
+  const r = parseInt(cleaned.slice(0, 2), 16);
+  const g = parseInt(cleaned.slice(2, 4), 16);
+  const b = parseInt(cleaned.slice(4, 6), 16);
+  return { r, g, b };
+}
+
+export function rgbToHsv(r: number, g: number, b: number): { hueDeg: number; saturation01: number; value01: number } {
+  const rr = clamp(r / 255, 0, 1);
+  const gg = clamp(g / 255, 0, 1);
+  const bb = clamp(b / 255, 0, 1);
+
+  const max = Math.max(rr, gg, bb);
+  const min = Math.min(rr, gg, bb);
+  const delta = max - min;
+
+  let hueDeg = 0;
+  if (delta !== 0) {
+    if (max === rr) {
+      hueDeg = 60 * (((gg - bb) / delta) % 6);
+    } else if (max === gg) {
+      hueDeg = 60 * ((bb - rr) / delta + 2);
+    } else {
+      hueDeg = 60 * ((rr - gg) / delta + 4);
+    }
+  }
+  if (hueDeg < 0) hueDeg += 360;
+
+  const saturation01 = max === 0 ? 0 : delta / max;
+  const value01 = max;
+
+  return { hueDeg, saturation01, value01 };
+}
+
+export function hexToHsv(hex: string): { hueDeg: number; saturation01: number; value01: number } | undefined {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return undefined;
+  return rgbToHsv(rgb.r, rgb.g, rgb.b);
+}

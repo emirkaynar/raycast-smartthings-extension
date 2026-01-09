@@ -96,3 +96,49 @@ export async function setSwitchLevel(accessToken: string, deviceId: string, leve
     }),
   });
 }
+
+export async function setColorControl(accessToken: string, deviceId: string, hue: number, saturation: number): Promise<void> {
+  const url = `https://api.smartthings.com/v1/devices/${encodeURIComponent(deviceId)}/commands`;
+  const init = (commands: unknown) => ({
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      accept: "application/json",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ commands }),
+  });
+
+  // Prefer a single command (less likely to produce partial-failure HTTP 424).
+  try {
+    await fetchJson(url, init([{ component: "main", capability: "colorControl", command: "setColor", arguments: [{ hue, saturation }] }]));
+    return;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // Fallback for devices that don't implement setColor.
+    if (!msg.includes("HTTP 400") && !msg.includes("HTTP 404") && !msg.includes("HTTP 424")) throw err;
+  }
+
+  await fetchJson(
+    url,
+    init([
+      { component: "main", capability: "colorControl", command: "setHue", arguments: [hue] },
+      { component: "main", capability: "colorControl", command: "setSaturation", arguments: [saturation] },
+    ]),
+  );
+}
+
+export async function setColorTemperature(accessToken: string, deviceId: string, kelvin: number): Promise<void> {
+  const url = `https://api.smartthings.com/v1/devices/${encodeURIComponent(deviceId)}/commands`;
+  await fetchJson(url, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      accept: "application/json",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      commands: [{ component: "main", capability: "colorTemperature", command: "setColorTemperature", arguments: [kelvin] }],
+    }),
+  });
+}
