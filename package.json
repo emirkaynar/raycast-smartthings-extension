@@ -1,8 +1,8 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "smartthings-home-control",
-  "title": "SmartThings Home Control",
-  "description": "Control and monitor your Samsung SmartThings devices directly from Raycast.",
+  "title": "SmartThings",
+  "description": "Control and monitor your SmartThings devices directly from Raycast.",
   "icon": "extension-icon.png",
   "license": "MIT",
   "commands": [
@@ -11,17 +11,25 @@
       "title": "Control Devices",
       "description": "Authenticate with SmartThings and control your smart home devices.",
       "mode": "view",
-      "subtitle": "SmartThings Home Control",
+      "subtitle": "SmartThings",
       "preferences": [
         {
           "name": "brokerBaseUrl",
-          "title": "Auth Broker Base URL",
-          "description": "Base URL of the Cloudflare Worker auth broker.",
+          "title": "Auth Broker URL",
+          "description": "This extension uses a small auth broker to handle SmartThings OAuth + refresh tokens. The default is a hosted broker. If you prefer, you can deploy your own Worker (BYOK) and paste its base URL here.",
           "type": "textfield",
           "required": true,
-          "default": "https://smartthings-auth-worker.emirkaynar.workers.dev"
+          "default": "https://smartthings-auth-worker.emirkaynar.workers.dev",
+          "placeholder": "Enter your auth broker URL"
         }
       ]
+    },
+    {
+      "name": "testing",
+      "title": "Testing",
+      "description": "Authenticate with SmartThings and view the status of your smart home devices.",
+      "mode": "view",
+      "subtitle": "SmartThings"
     }
   ],
   "dependencies": {
@@ -44,7 +52,7 @@
     "publish": "npx @raycast/api@latest publish",
     "prepublishOnly": "echo \"\\n\\nIt seems like you are trying to publish the Raycast extension to npm.\\n\\nIf you did intend to publish it to npm, remove the \\`prepublishOnly\\` script and rerun \\`npm publish\\` again.\\nIf you wanted to publish it to the Raycast Store instead, use \\`npm run publish\\` instead.\\n\\n\" && exit 1"
   },
-  "author": "theema-dev",
+  "author": "emirkaynar",
   "platforms": [
     "Windows",
     "macOS"
