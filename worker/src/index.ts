@@ -431,7 +431,7 @@ export default {
 
         if (oauthError) {
           const msg = `SmartThings returned an OAuth error: ${oauthError}${oauthErrorDescription ? ` - ${oauthErrorDescription}` : ""}`;
-          console.log(JSON.stringify({ event: "callback_oauth_error", error: oauthError, ip: clientIp }));
+          console.log(JSON.stringify({ event: "callback_oauth_error", ip: clientIp }));
 
           if (state) {
             const pairKey = `pair:${state}`;
