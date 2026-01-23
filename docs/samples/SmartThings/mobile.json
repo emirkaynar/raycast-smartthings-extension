@@ -1,0 +1,91 @@
+{
+  "deviceId": "<REDACTED:DEVICE_ID:MOBILE_PRESENCE>",
+  "device": {
+    "deviceId": "<REDACTED:DEVICE_ID:MOBILE_PRESENCE>",
+    "name": "<REDACTED:DEVICE_NAME>",
+    "label": "<REDACTED:DEVICE_LABEL>",
+    "manufacturerName": "SmartThings",
+    "presentationId": "SmartThings-smartthings-Mobile_Presence",
+    "locationId": "<REDACTED:LOCATION_ID>",
+    "ownerId": "<REDACTED:OWNER_ID>",
+    "components": [
+      {
+        "id": "main",
+        "label": "main",
+        "capabilities": [
+          {
+            "id": "presenceSensor",
+            "version": 1
+          }
+        ],
+        "categories": [
+          {
+            "name": "MobilePresence",
+            "categoryType": "manufacturer"
+          }
+        ],
+        "optional": false
+      }
+    ],
+    "createTime": "2025-01-31T21:39:40.386Z",
+    "parentDeviceId": "<REDACTED:PARENT_DEVICE_ID>",
+    "profile": {
+      "id": "<REDACTED:PROFILE_ID>"
+    },
+    "type": "MOBILE",
+    "restrictionTier": 0,
+    "allowed": null,
+    "executionContext": "CLOUD",
+    "relationships": []
+  },
+  "status": {
+    "components": {
+      "main": {
+        "presenceSensor": {
+          "presence": {
+            "value": "present",
+            "timestamp": "2026-01-23T15:20:44.649Z"
+          }
+        }
+      }
+    }
+  },
+  "listItem": {
+    "deviceId": "<REDACTED:DEVICE_ID:MOBILE_PRESENCE>",
+    "name": "<REDACTED:DEVICE_NAME>",
+    "label": "<REDACTED:DEVICE_LABEL>",
+    "manufacturerName": "SmartThings",
+    "presentationId": "SmartThings-smartthings-Mobile_Presence",
+    "locationId": "<REDACTED:LOCATION_ID>",
+    "ownerId": "<REDACTED:OWNER_ID>",
+    "components": [
+      {
+        "id": "main",
+        "label": "main",
+        "capabilities": [
+          {
+            "id": "presenceSensor",
+            "version": 1
+          }
+        ],
+        "categories": [
+          {
+            "name": "MobilePresence",
+            "categoryType": "manufacturer"
+          }
+        ],
+        "optional": false
+      }
+    ],
+    "createTime": "2025-01-31T21:39:40.386Z",
+    "parentDeviceId": "<REDACTED:PARENT_DEVICE_ID>",
+    "profile": {
+      "id": "<REDACTED:PROFILE_ID>"
+    },
+    "type": "MOBILE",
+    "restrictionTier": 0,
+    "allowed": [],
+    "executionContext": "CLOUD",
+    "relationships": []
+  }
+}

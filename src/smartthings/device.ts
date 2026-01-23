@@ -29,11 +29,12 @@ export function getDeviceCategoryName(device: SmartThingsDevice): string | undef
   return categories[0]?.name;
 }
 
-export function getDeviceKind(device: SmartThingsDevice): "light" | "television" | "presence" | "switch" | "other" {
+export function getDeviceKind(device: SmartThingsDevice): "light" | "television" | "presence" | "switch" |  "mobile" | "other" {
   const category = getDeviceCategoryName(device);
   if (category === "Light") return "light";
   if (category === "Television") return "television";
-  if (category === "MobilePresence" || category === "PresenceSensor" || category === "Mobile") return "presence";
+  if (category === "PresenceSensor" || category === "Mobile") return "presence";
+  if (category === "MobilePresence") return "mobile";
   if (deviceHasCapability(device, "switch")) return "switch";
   return "other";
 }

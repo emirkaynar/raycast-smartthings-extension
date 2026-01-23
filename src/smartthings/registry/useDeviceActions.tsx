@@ -11,6 +11,8 @@ import type { SmartThingsDevice } from "../types";
 import type { DeviceUiInfo } from "../ui";
 import type { BrightnessDebounceState, DeviceActionContext, DeviceActionModule } from "./types";
 
+import { markDeviceUsed } from "../lastUsed";
+
 import { switchToggleAction } from "../actions/switchToggle";
 import { brightnessActions } from "../actions/brightness";
 import { colorControlAction } from "../actions/colorControl";
@@ -21,6 +23,8 @@ export type UseDeviceActionsParams = {
   brokerBaseUrl: string;
   accessToken?: string;
   revalidate: () => Promise<void> | void;
+
+  onDeviceUsed?: (deviceId: string, usedAtMs: number) => void;
 
   storageSessionTokenKey: string;
   onReconnect: () => Promise<void>;
@@ -38,6 +42,7 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
     brokerBaseUrl,
     accessToken,
     revalidate,
+    onDeviceUsed,
     storageSessionTokenKey,
     onReconnect,
     onDisconnect,
@@ -49,8 +54,14 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
   const brightnessDebounceRef = useRef<Map<string, BrightnessDebounceState>>(new Map());
 
   const switchClient = useMemo(() => (accessToken ? createSwitchClient(accessToken) : undefined), [accessToken]);
-  const switchLevelClient = useMemo(() => (accessToken ? createSwitchLevelClient(accessToken) : undefined), [accessToken]);
-  const colorControlClient = useMemo(() => (accessToken ? createColorControlClient(accessToken) : undefined), [accessToken]);
+  const switchLevelClient = useMemo(
+    () => (accessToken ? createSwitchLevelClient(accessToken) : undefined),
+    [accessToken],
+  );
+  const colorControlClient = useMemo(
+    () => (accessToken ? createColorControlClient(accessToken) : undefined),
+    [accessToken],
+  );
   const colorTemperatureClient = useMemo(
     () => (accessToken ? createColorTemperatureClient(accessToken) : undefined),
     [accessToken],
@@ -125,6 +136,8 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
             }
 
             await switchLevelClient.setLevel(deviceId, desired);
+            const usedAtMs = await markDeviceUsed(LocalStorage, deviceId);
+            onDeviceUsed?.(deviceId, usedAtMs);
             state.target = undefined;
 
             state.toast.style = Toast.Style.Success;
@@ -170,11 +183,25 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
         void commit();
       }, brightnessDebounceMs);
     },
-    [accessToken, brightnessDebounceMs, revalidate, switchClient, switchLevelClient],
+    [accessToken, brightnessDebounceMs, onDeviceUsed, revalidate, switchClient, switchLevelClient],
+  );
+
+  const markUsed = useCallback(
+    async (deviceId: string) => {
+      const usedAtMs = await markDeviceUsed(LocalStorage, deviceId);
+      onDeviceUsed?.(deviceId, usedAtMs);
+    },
+    [onDeviceUsed],
   );
 
   const baseModules: DeviceActionModule[] = useMemo(() => {
-    const modules: DeviceActionModule[] = [switchToggleAction, brightnessActions, colorControlAction, rawDataAction, sessionActions];
+    const modules: DeviceActionModule[] = [
+      switchToggleAction,
+      brightnessActions,
+      colorControlAction,
+      rawDataAction,
+      sessionActions,
+    ];
     if (extraModules?.length) modules.push(...extraModules);
     const groupOrder: Record<DeviceActionModule["group"], number> = {
       primary: 0,
@@ -211,6 +238,8 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
         onReconnect,
         onDisconnect,
 
+        markDeviceUsed: markUsed,
+
         LocalStorage,
       };
     },
@@ -227,6 +256,7 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
       switchLevelClient,
       colorControlClient,
       colorTemperatureClient,
+      markUsed,
     ],
   );
 
@@ -237,7 +267,11 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
       const secondary: React.ReactNode[] = [];
       const debug: React.ReactNode[] = [];
 
-      const pushRendered = (target: React.ReactNode[], moduleId: string, rendered: React.ReactNode | React.ReactNode[]) => {
+      const pushRendered = (
+        target: React.ReactNode[],
+        moduleId: string,
+        rendered: React.ReactNode | React.ReactNode[],
+      ) => {
         const items = Array.isArray(rendered) ? rendered : [rendered];
         for (let i = 0; i < items.length; i++) {
           const node = items[i];
@@ -257,10 +291,24 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
       }
 
       const sections: React.ReactNode[] = [];
-      if (primary.length) sections.push(<ActionPanel.Section key="primary" title="Controls">{primary}</ActionPanel.Section>);
+      if (primary.length)
+        sections.push(
+          <ActionPanel.Section key="primary" title="Controls">
+            {primary}
+          </ActionPanel.Section>,
+        );
       if (secondary.length)
-        sections.push(<ActionPanel.Section key="secondary" title="Session">{secondary}</ActionPanel.Section>);
-      if (debug.length) sections.push(<ActionPanel.Section key="debug" title="Debug">{debug}</ActionPanel.Section>);
+        sections.push(
+          <ActionPanel.Section key="secondary" title="Session">
+            {secondary}
+          </ActionPanel.Section>,
+        );
+      if (debug.length)
+        sections.push(
+          <ActionPanel.Section key="debug" title="Debug">
+            {debug}
+          </ActionPanel.Section>,
+        );
       return sections;
     },
     [baseModules, getContext],

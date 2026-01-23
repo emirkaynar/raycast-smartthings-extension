@@ -1,4 +1,14 @@
-import { Action, ActionPanel, Form, Grid, Icon, Toast, showToast, type LocalStorage, useNavigation } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Form,
+  Grid,
+  Icon,
+  Toast,
+  showToast,
+  type LocalStorage,
+  useNavigation,
+} from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useMemo } from "react";
 
@@ -55,7 +65,11 @@ export function ColorControlGrid(props: { ctx: DeviceActionContext }) {
   const canHs = Boolean(ctx.colorControlClient?.supports(ctx.device));
   const canTemp = Boolean(ctx.colorTemperatureClient?.supports(ctx.device));
 
-  const { data: customColors, isLoading, revalidate } = useCachedPromise(
+  const {
+    data: customColors,
+    isLoading,
+    revalidate,
+  } = useCachedPromise(
     async () => {
       return loadCustomColors(ctx.LocalStorage);
     },
@@ -138,6 +152,7 @@ export function ColorControlGrid(props: { ctx: DeviceActionContext }) {
     try {
       await ensureOn();
       await ctx.colorControlClient.setColor(ctx.device.deviceId, hue100, sat100);
+      await ctx.markDeviceUsed(ctx.device.deviceId);
       toast.style = Toast.Style.Success;
       toast.title = "Color set";
       await ctx.revalidate();
@@ -151,10 +166,15 @@ export function ColorControlGrid(props: { ctx: DeviceActionContext }) {
   async function applyTemperature(kelvin: number) {
     if (!ctx.accessToken || !ctx.colorTemperatureClient) return;
 
-    const toast = await showToast({ style: Toast.Style.Animated, title: "Setting temperature…", message: `${kelvin}K` });
+    const toast = await showToast({
+      style: Toast.Style.Animated,
+      title: "Setting temperature…",
+      message: `${kelvin}K`,
+    });
     try {
       await ensureOn();
       await ctx.colorTemperatureClient.setTemperature(ctx.device.deviceId, kelvin);
+      await ctx.markDeviceUsed(ctx.device.deviceId);
       toast.style = Toast.Style.Success;
       toast.title = "Temperature set";
       toast.message = `${kelvin}K`;
@@ -199,7 +219,10 @@ export function ColorControlGrid(props: { ctx: DeviceActionContext }) {
                     style={Action.Style.Destructive}
                     onAction={async () => {
                       const existing = await loadCustomColors(ctx.LocalStorage);
-                      await saveCustomColors(ctx.LocalStorage, existing.filter((x) => x.id !== c.id));
+                      await saveCustomColors(
+                        ctx.LocalStorage,
+                        existing.filter((x) => x.id !== c.id),
+                      );
                       await revalidate();
                       await showToast({ style: Toast.Style.Success, title: "Removed" });
                     }}
@@ -261,7 +284,7 @@ export function ColorControlGrid(props: { ctx: DeviceActionContext }) {
       ) : null}
 
       {canTemp ? (
-        <Grid.Section title="Whites (Cool → Warm)">
+        <Grid.Section title="Whites">
           {presets.whites.map((t) => (
             <Grid.Item
               key={t.id}

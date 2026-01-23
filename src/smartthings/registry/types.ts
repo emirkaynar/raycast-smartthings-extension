@@ -38,6 +38,9 @@ export type DeviceActionContext = {
   onReconnect: () => Promise<void>;
   onDisconnect: () => Promise<void>;
 
+  // Usage helpers
+  markDeviceUsed: (deviceId: string) => Promise<void>;
+
   // Injected Raycast APIs (keeps modules testable-ish)
   LocalStorage: typeof LocalStorage;
 };

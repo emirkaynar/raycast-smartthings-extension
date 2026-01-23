@@ -1,6 +1,6 @@
 import { Icon } from "@raycast/api";
 
-export function iconForKind(kind: "light" | "television" | "presence" | "switch" | "other"): Icon {
+export function iconForKind(kind: "light" | "television" | "presence" | "switch" | "mobile" | "other"): Icon {
   switch (kind) {
     case "light":
       return Icon.LightBulb;
@@ -10,6 +10,8 @@ export function iconForKind(kind: "light" | "television" | "presence" | "switch"
       return Icon.Livestream;
     case "switch":
       return Icon.Switch;
+    case "mobile":
+      return Icon.Mobile;
     default:
       return Icon.Dot;
   }

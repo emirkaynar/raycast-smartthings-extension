@@ -1,0 +1,237 @@
+{
+  "deviceId": "<REDACTED:DEVICE_ID:WIZ_A_E27>",
+  "device": {
+    "deviceId": "<REDACTED:DEVICE_ID:WIZ_A_E27>",
+    "name": "c2c-color-temperature-bulb",
+    "label": "Main",
+    "manufacturerName": "SmartThings",
+    "presentationId": "SmartThings-smartthings-c2c-color-temperature-bulb",
+    "deviceManufacturerCode": "WiZ",
+    "locationId": "<REDACTED:LOCATION_ID>",
+    "ownerId": "<REDACTED:OWNER_ID>",
+    "roomId": "<REDACTED:ROOM_ID>",
+    "components": [
+      {
+        "id": "main",
+        "label": "main",
+        "capabilities": [
+          {
+            "id": "switch",
+            "version": 1
+          },
+          {
+            "id": "switchLevel",
+            "version": 1
+          },
+          {
+            "id": "colorTemperature",
+            "version": 1
+          },
+          {
+            "id": "refresh",
+            "version": 1
+          },
+          {
+            "id": "healthCheck",
+            "version": 1
+          },
+          {
+            "id": "synthetic.lightingEffectFade",
+            "version": 1
+          },
+          {
+            "id": "synthetic.lightingEffectCircadian",
+            "version": 1
+          }
+        ],
+        "categories": [
+          {
+            "name": "Light",
+            "categoryType": "manufacturer"
+          }
+        ],
+        "optional": false
+      }
+    ],
+    "createTime": "2024-11-16T20:27:15.963Z",
+    "profile": {
+      "id": "<REDACTED:PROFILE_ID>"
+    },
+    "viper": {
+      "manufacturerName": "WiZ",
+      "modelName": "A.E27",
+      "swVersion": "1.36.0",
+      "endpointAppId": "<REDACTED:ENDPOINT_APP_ID>"
+    },
+    "type": "VIPER",
+    "restrictionTier": 0,
+    "allowed": null,
+    "executionContext": "CLOUD",
+    "relationships": []
+  },
+  "status": {
+    "components": {
+      "main": {
+        "healthCheck": {
+          "checkInterval": {
+            "value": 60,
+            "unit": "s",
+            "data": {
+              "deviceScheme": "UNTRACKED",
+              "protocol": "cloud"
+            },
+            "timestamp": "2024-11-16T20:27:16.015Z",
+            "timeZoneId": "<REDACTED:TIMEZONE>"
+          },
+          "healthStatus": {
+            "value": null
+          },
+          "DeviceWatch-Enroll": {
+            "value": null
+          },
+          "DeviceWatch-DeviceStatus": {
+            "value": "online",
+            "data": {},
+            "timestamp": "2026-01-23T15:50:57.000Z"
+          }
+        },
+        "switchLevel": {
+          "levelRange": {
+            "value": null
+          },
+          "level": {
+            "value": 100,
+            "unit": "%",
+            "timestamp": "2026-01-23T15:24:37.227Z"
+          }
+        },
+        "refresh": {},
+        "synthetic.lightingEffectFade": {
+          "fade": {
+            "value": {
+              "duration": 5,
+              "effects": [
+                {
+                  "capability": "switchLevel",
+                  "start": 100,
+                  "end": 1
+                },
+                {
+                  "capability": "colorTemperature",
+                  "start": 5000,
+                  "end": 2700
+                }
+              ],
+              "fadeType": "WindDown",
+              "state": "Stop",
+              "afterAction": {
+                "timeZoneId": "<REDACTED:TIMEZONE>",
+                "afterActionType": "TurnOff"
+              }
+            },
+            "timestamp": "2025-09-22T04:13:29.916Z"
+          }
+        },
+        "switch": {
+          "switch": {
+            "value": "off",
+            "timestamp": "2026-01-23T16:06:06.144Z"
+          }
+        },
+        "colorTemperature": {
+          "colorTemperatureRange": {
+            "value": {
+              "minimum": 2700,
+              "maximum": 6500
+            },
+            "unit": "K",
+            "timestamp": "2026-01-23T15:24:37.227Z"
+          },
+          "colorTemperature": {
+            "value": 6500,
+            "unit": "K",
+            "timestamp": "2026-01-23T16:01:17.036Z"
+          }
+        },
+        "synthetic.lightingEffectCircadian": {
+          "circadian": {
+            "value": {
+              "timeZoneId": "<REDACTED:TIMEZONE>",
+              "state": "Stop"
+            },
+            "timestamp": "2025-09-12T08:14:06.539Z"
+          }
+        }
+      }
+    }
+  },
+  "listItem": {
+    "deviceId": "<REDACTED:DEVICE_ID:WIZ_A_E27>",
+    "name": "c2c-color-temperature-bulb",
+    "label": "Main",
+    "manufacturerName": "SmartThings",
+    "presentationId": "SmartThings-smartthings-c2c-color-temperature-bulb",
+    "deviceManufacturerCode": "WiZ",
+    "locationId": "<REDACTED:LOCATION_ID>",
+    "ownerId": "<REDACTED:OWNER_ID>",
+    "roomId": "<REDACTED:ROOM_ID>",
+    "components": [
+      {
+        "id": "main",
+        "label": "main",
+        "capabilities": [
+          {
+            "id": "switch",
+            "version": 1
+          },
+          {
+            "id": "switchLevel",
+            "version": 1
+          },
+          {
+            "id": "colorTemperature",
+            "version": 1
+          },
+          {
+            "id": "refresh",
+            "version": 1
+          },
+          {
+            "id": "healthCheck",
+            "version": 1
+          },
+          {
+            "id": "synthetic.lightingEffectFade",
+            "version": 1
+          },
+          {
+            "id": "synthetic.lightingEffectCircadian",
+            "version": 1
+          }
+        ],
+        "categories": [
+          {
+            "name": "Light",
+            "categoryType": "manufacturer"
+          }
+        ],
+        "optional": false
+      }
+    ],
+    "createTime": "2024-11-16T20:27:15.963Z",
+    "profile": {
+      "id": "<REDACTED:PROFILE_ID>"
+    },
+    "viper": {
+      "manufacturerName": "WiZ",
+      "modelName": "A.E27",
+      "swVersion": "1.36.0",
+      "endpointAppId": "<REDACTED:ENDPOINT_APP_ID>"
+    },
+    "type": "VIPER",
+    "restrictionTier": 0,
+    "allowed": [],
+    "executionContext": "CLOUD",
+    "relationships": []
+  }
+}

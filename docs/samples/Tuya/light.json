@@ -1,0 +1,264 @@
+{
+  "deviceId": "<REDACTED:DEVICE_ID:TUYA_LIGHT>",
+  "device": {
+    "deviceId": "<REDACTED:DEVICE_ID:TUYA_LIGHT>",
+    "name": "c2c-rgbw-color-bulb",
+    "label": "Ambiance",
+    "manufacturerName": "SmartThings",
+    "presentationId": "SmartThings-smartthings-c2c-rgbw-color-bulb",
+    "deviceManufacturerCode": "Tuya Inc.",
+    "locationId": "<REDACTED:LOCATION_ID>",
+    "ownerId": "<REDACTED:OWNER_ID>",
+    "roomId": "<REDACTED:ROOM_ID>",
+    "components": [
+      {
+        "id": "main",
+        "label": "main",
+        "capabilities": [
+          {
+            "id": "switch",
+            "version": 1
+          },
+          {
+            "id": "switchLevel",
+            "version": 1
+          },
+          {
+            "id": "colorControl",
+            "version": 1
+          },
+          {
+            "id": "colorTemperature",
+            "version": 1
+          },
+          {
+            "id": "refresh",
+            "version": 1
+          },
+          {
+            "id": "healthCheck",
+            "version": 1
+          },
+          {
+            "id": "synthetic.lightingEffectFade",
+            "version": 1
+          },
+          {
+            "id": "synthetic.lightingEffectCircadian",
+            "version": 1
+          }
+        ],
+        "categories": [
+          {
+            "name": "Light",
+            "categoryType": "manufacturer"
+          },
+          {
+            "name": "Light",
+            "categoryType": "user"
+          }
+        ],
+        "optional": false
+      }
+    ],
+    "createTime": "2024-01-21T15:29:34.664Z",
+    "profile": {
+      "id": "<REDACTED:PROFILE_ID>"
+    },
+    "viper": {
+      "uniqueIdentifier": "<REDACTED:UNIQUE_IDENTIFIER>",
+      "manufacturerName": "Tuya Inc.",
+      "modelName": "light",
+      "swVersion": "23.123.231",
+      "hwVersion": "v1 US bulb",
+      "endpointAppId": "<REDACTED:ENDPOINT_APP_ID>"
+    },
+    "type": "VIPER",
+    "restrictionTier": 0,
+    "allowed": null,
+    "executionContext": "CLOUD",
+    "relationships": []
+  },
+  "status": {
+    "components": {
+      "main": {
+        "colorControl": {
+          "saturation": {
+            "value": 90,
+            "timestamp": "2026-01-23T15:52:51.683Z"
+          },
+          "color": {
+            "value": null
+          },
+          "hue": {
+            "value": 97,
+            "timestamp": "2026-01-23T15:52:51.683Z"
+          }
+        },
+        "healthCheck": {
+          "checkInterval": {
+            "value": 60,
+            "unit": "s",
+            "data": {
+              "deviceScheme": "UNTRACKED",
+              "protocol": "cloud"
+            },
+            "timestamp": "2024-01-21T15:29:34.759Z"
+          },
+          "healthStatus": {
+            "value": null
+          },
+          "DeviceWatch-Enroll": {
+            "value": null
+          },
+          "DeviceWatch-DeviceStatus": {
+            "value": "online",
+            "data": {},
+            "timestamp": "2026-01-23T15:29:54.761Z"
+          }
+        },
+        "switchLevel": {
+          "levelRange": {
+            "value": null
+          },
+          "level": {
+            "value": 100,
+            "unit": "%",
+            "timestamp": "2026-01-23T15:50:51.113Z"
+          }
+        },
+        "refresh": {},
+        "synthetic.lightingEffectFade": {
+          "fade": {
+            "value": {
+              "duration": 5,
+              "effects": [
+                {
+                  "capability": "switchLevel",
+                  "start": 100,
+                  "end": 1
+                },
+                {
+                  "capability": "colorTemperature",
+                  "start": 9000,
+                  "end": 2200
+                }
+              ],
+              "fadeType": "WindDown",
+              "state": "Stop",
+              "afterAction": {
+                "timeZoneId": "<REDACTED:TIMEZONE>",
+                "afterActionType": "TurnOff"
+              }
+            },
+            "timestamp": "2025-09-22T04:13:29.772Z"
+          }
+        },
+        "switch": {
+          "switch": {
+            "value": "on",
+            "timestamp": "2026-01-23T15:46:41.796Z"
+          }
+        },
+        "colorTemperature": {
+          "colorTemperatureRange": {
+            "value": null
+          },
+          "colorTemperature": {
+            "value": 1500,
+            "unit": "K",
+            "timestamp": "2026-01-23T15:52:51.683Z"
+          }
+        },
+        "synthetic.lightingEffectCircadian": {
+          "circadian": {
+            "value": {
+              "timeZoneId": "<REDACTED:TIMEZONE>",
+              "state": "Stop"
+            },
+            "timestamp": "2026-01-09T08:40:05.190Z"
+          }
+        }
+      }
+    }
+  },
+  "listItem": {
+    "deviceId": "<REDACTED:DEVICE_ID:TUYA_LIGHT>",
+    "name": "c2c-rgbw-color-bulb",
+    "label": "Ambiance",
+    "manufacturerName": "SmartThings",
+    "presentationId": "SmartThings-smartthings-c2c-rgbw-color-bulb",
+    "deviceManufacturerCode": "Tuya Inc.",
+    "locationId": "<REDACTED:LOCATION_ID>",
+    "ownerId": "<REDACTED:OWNER_ID>",
+    "roomId": "<REDACTED:ROOM_ID>",
+    "components": [
+      {
+        "id": "main",
+        "label": "main",
+        "capabilities": [
+          {
+            "id": "switch",
+            "version": 1
+          },
+          {
+            "id": "switchLevel",
+            "version": 1
+          },
+          {
+            "id": "colorControl",
+            "version": 1
+          },
+          {
+            "id": "colorTemperature",
+            "version": 1
+          },
+          {
+            "id": "refresh",
+            "version": 1
+          },
+          {
+            "id": "healthCheck",
+            "version": 1
+          },
+          {
+            "id": "synthetic.lightingEffectFade",
+            "version": 1
+          },
+          {
+            "id": "synthetic.lightingEffectCircadian",
+            "version": 1
+          }
+        ],
+        "categories": [
+          {
+            "name": "Light",
+            "categoryType": "manufacturer"
+          },
+          {
+            "name": "Light",
+            "categoryType": "user"
+          }
+        ],
+        "optional": false
+      }
+    ],
+    "createTime": "2024-01-21T15:29:34.664Z",
+    "profile": {
+      "id": "<REDACTED:PROFILE_ID>"
+    },
+    "viper": {
+      "uniqueIdentifier": "<REDACTED:UNIQUE_IDENTIFIER>",
+      "manufacturerName": "Tuya Inc.",
+      "modelName": "light",
+      "swVersion": "23.123.231",
+      "hwVersion": "v1 US bulb",
+      "endpointAppId": "<REDACTED:ENDPOINT_APP_ID>"
+    },
+    "type": "VIPER",
+    "restrictionTier": 0,
+    "allowed": [],
+    "executionContext": "CLOUD",
+    "relationships": []
+  }
+}

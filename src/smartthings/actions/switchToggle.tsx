@@ -21,6 +21,7 @@ export const switchToggleAction: DeviceActionModule = {
           const current = await ctx.switchClient.getState(ctx.device.deviceId);
           const next = current === "on" ? "off" : "on";
           await ctx.switchClient.setState(ctx.device.deviceId, next);
+          await ctx.markDeviceUsed(ctx.device.deviceId);
           await showToast({ style: Toast.Style.Success, title: `Turned ${next}` });
           await ctx.revalidate();
         }}

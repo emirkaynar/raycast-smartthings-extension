@@ -1,6 +1,6 @@
 import { ActionPanel, Color, List, LocalStorage, Toast, getPreferenceValues, open, showToast } from "@raycast/api";
-import { useCachedPromise } from "@raycast/utils";
-import { useCallback, useMemo } from "react";
+import { useCachedPromise, useCachedState } from "@raycast/utils";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   brokerLogout,
@@ -20,12 +20,17 @@ import type { SmartThingsDevice } from "./smartthings/types";
 import { iconForKind } from "./ui/icons";
 
 import { useDeviceActions } from "./smartthings/registry/useDeviceActions";
+import { loadDeviceLastUsed, type DeviceLastUsedMap } from "./smartthings/lastUsed";
 
 type Preferences = {
   brokerBaseUrl: string;
 };
 
 const STORAGE_SESSION_TOKEN_KEY = "smartthings_session_token";
+
+const STORAGE_CATEGORY_FILTER_KEY = "smartthings_device_category_filter_v1";
+
+type CategoryFilter = "all" | "recent" | "lights" | "sensors" | "other";
 
 const BRIGHTNESS_STEP = 5;
 const BRIGHTNESS_DEBOUNCE_MS = 800;
@@ -79,6 +84,30 @@ async function ensureConnected(brokerBaseUrl: string): Promise<string> {
 export default function ListDevicesCommand() {
   const prefs = getPreferenceValues<Preferences>();
   const brokerBaseUrl = useMemo(() => normalizeBaseUrl(prefs.brokerBaseUrl), [prefs.brokerBaseUrl]);
+
+  const [category, setCategory] = useCachedState<CategoryFilter>(STORAGE_CATEGORY_FILTER_KEY, "all");
+  const [lastUsedById, setLastUsedById] = useState<DeviceLastUsedMap>({});
+  const [sortLastUsedById, setSortLastUsedById] = useState<DeviceLastUsedMap>({});
+  const [uiHydrated, setUiHydrated] = useState(false);
+
+  const userSetCategoryRef = useRef(false);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const lastUsed = await loadDeviceLastUsed(LocalStorage);
+        if (cancelled) return;
+
+        setLastUsedById(lastUsed);
+        setSortLastUsedById(lastUsed);
+      } finally {
+        if (!cancelled) setUiHydrated(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadDevices = useCallback(async () => {
     const sessionToken = await ensureConnected(brokerBaseUrl);
@@ -142,10 +171,15 @@ export default function ListDevicesCommand() {
     revalidate();
   }, [brokerBaseUrl, revalidate]);
 
+  const onDeviceUsed = useCallback((deviceId: string, usedAtMs: number) => {
+    setLastUsedById((prev) => ({ ...prev, [deviceId]: usedAtMs }));
+  }, []);
+
   const { renderActionsForDevice } = useDeviceActions({
     brokerBaseUrl,
     accessToken,
     revalidate,
+    onDeviceUsed,
     storageSessionTokenKey: STORAGE_SESSION_TOKEN_KEY,
     onReconnect,
     onDisconnect,
@@ -153,70 +187,145 @@ export default function ListDevicesCommand() {
     brightnessDebounceMs: BRIGHTNESS_DEBOUNCE_MS,
   });
 
+  const visibleDevices = useMemo(() => {
+    const titleFor = (d: SmartThingsDevice) => (d.label || d.name || d.deviceId).toLowerCase();
+    const lastUsedFor = (d: SmartThingsDevice) => sortLastUsedById[d.deviceId] ?? 0;
+
+    const isLightDevice = (d: SmartThingsDevice) => {
+      const kind = getDeviceKind(d);
+      if (kind === "light") return true;
+      // Fallback: treat dimmable/color-capable devices as lights.
+      return (
+        deviceHasCapability(d, "switchLevel") ||
+        deviceHasCapability(d, "colorControl") ||
+        deviceHasCapability(d, "colorTemperature")
+      );
+    };
+
+    const isSensorDevice = (d: SmartThingsDevice) => {
+      const kind = getDeviceKind(d);
+      if (kind === "presence" || kind === "mobile") return true;
+      const sensorCaps = [
+        "presenceSensor",
+        "motionSensor",
+        "contactSensor",
+        "temperatureMeasurement",
+        "relativeHumidityMeasurement",
+        "illuminanceMeasurement",
+        "waterSensor",
+        "smokeDetector",
+        "carbonMonoxideDetector",
+      ];
+      return sensorCaps.some((cap) => deviceHasCapability(d, cap));
+    };
+
+    const sorted = [...devices].sort((a, b) => {
+      const delta = lastUsedFor(b) - lastUsedFor(a);
+      if (delta !== 0) return delta;
+      return titleFor(a).localeCompare(titleFor(b));
+    });
+
+    if (category === "recent") {
+      return sorted.filter((d) => lastUsedFor(d) > 0).slice(0, 20);
+    }
+    if (category === "lights") {
+      return sorted.filter(isLightDevice);
+    }
+    if (category === "sensors") {
+      return sorted.filter(isSensorDevice);
+    }
+    if (category === "other") {
+      return sorted.filter((d) => !isLightDevice(d) && !isSensorDevice(d));
+    }
+    return sorted;
+  }, [category, devices, sortLastUsedById]);
+
   return (
-    <List isLoading={isLoading} searchBarPlaceholder="Search devices…">
+    <List
+      isLoading={isLoading || !uiHydrated}
+      searchBarPlaceholder="Search devices…"
+      searchBarAccessory={
+        <List.Dropdown
+          tooltip="Category"
+          value={category}
+          onChange={async (next) => {
+            const value = next as CategoryFilter;
+            userSetCategoryRef.current = true;
+            setCategory(value);
+          }}
+        >
+          <List.Dropdown.Item title="All" value="all" />
+          <List.Dropdown.Item title="Recent" value="recent" />
+          <List.Dropdown.Item title="Lights" value="lights" />
+          <List.Dropdown.Item title="Sensors" value="sensors" />
+          <List.Dropdown.Item title="Other" value="other" />
+        </List.Dropdown>
+      }
+    >
       {error ? <List.EmptyView title="Error" description={String(error)} /> : null}
-      {devices.map((device) => {
-        const ui = deviceUiById[device.deviceId] ?? {};
-        const kind = getDeviceKind(device);
-        const title = device.label || device.name || device.deviceId;
-        const isLight = kind === "light";
-        const isSwitch = deviceHasCapability(device, "switch");
+      {uiHydrated
+        ? visibleDevices.map((device) => {
+            const ui = deviceUiById[device.deviceId] ?? {};
+            const kind = getDeviceKind(device);
+            const title = device.label || device.name || device.deviceId;
+            const isLight = kind === "light";
+            const isSwitch = deviceHasCapability(device, "switch");
 
-        const cachedSwitchState = ui.switchState;
-        const accessoryText =
-          kind === "presence" && ui.presence
-            ? ui.presence === "present"
-              ? "Present"
-              : "Away"
-            : cachedSwitchState === "on"
-              ? "On"
-              : cachedSwitchState === "off"
-                ? "Off"
-                : "";
-        const toggleTitle =
-          cachedSwitchState === "on" ? "Turn Off" : cachedSwitchState === "off" ? "Turn On" : "Toggle Switch";
+            const cachedSwitchState = ui.switchState;
+            const accessoryText =
+              kind === "presence" && ui.presence
+                ? ui.presence === "present"
+                  ? "Present"
+                  : "Away"
+                : cachedSwitchState === "on"
+                  ? "On"
+                  : cachedSwitchState === "off"
+                    ? "Off"
+                    : "";
+            const toggleTitle =
+              cachedSwitchState === "on" ? "Turn Off" : cachedSwitchState === "off" ? "Turn On" : "Toggle Switch";
 
-        const subtitle =
-          cachedSwitchState === "on" && isLight && typeof ui.level === "number" ? `${Math.round(ui.level)}%` : "";
-        const iconTint = (() => {
-          if (!isLight) return Color.SecondaryText;
-          if (cachedSwitchState !== "on") return Color.SecondaryText;
+            const subtitle =
+              cachedSwitchState === "on" && isLight && typeof ui.level === "number" ? `${Math.round(ui.level)}%` : "";
+            const iconTint = (() => {
+              if (!isLight) return Color.SecondaryText;
+              if (cachedSwitchState !== "on") return Color.SecondaryText;
 
-          // RGB-capable: tint to current hue/sat (and level, if present)
-          if (
-            deviceHasCapability(device, "colorControl") &&
-            typeof ui.hue === "number" &&
-            typeof ui.saturation === "number"
-          ) {
-            const hueDeg = clamp(ui.hue, 0, 100) * 3.6;
-            const sat01 = clamp(ui.saturation, 0, 100) / 100;
-            // If saturation is near-zero, treat as white and fall through to temperature (if available).
-            if (sat01 >= 0.08) {
-              return hsvToHex(hueDeg, sat01, 1);
-            }
-          }
+              // RGB-capable: tint to current hue/sat (and level, if present)
+              if (
+                deviceHasCapability(device, "colorControl") &&
+                typeof ui.hue === "number" &&
+                typeof ui.saturation === "number"
+              ) {
+                const hueDeg = clamp(ui.hue, 0, 100) * 3.6;
+                const sat01 = clamp(ui.saturation, 0, 100) / 100;
+                // If saturation is near-zero, treat as white and fall through to temperature (if available).
+                if (sat01 >= 0.08) {
+                  return hsvToHex(hueDeg, sat01, 1);
+                }
+              }
 
-          // Warmth-only (or near-white RGB): tint based on color temperature
-          if (deviceHasCapability(device, "colorTemperature") && typeof ui.colorTemperature === "number") {
-            return kelvinToHex(ui.colorTemperature);
-          }
+              // Warmth-only (or near-white RGB): tint based on color temperature
+              if (deviceHasCapability(device, "colorTemperature") && typeof ui.colorTemperature === "number") {
+                return kelvinToHex(ui.colorTemperature);
+              }
 
-          return Color.Yellow;
-        })();
+              return Color.Yellow;
+            })();
 
-        const iconSource = iconForKind(kind);
-        return (
-          <List.Item
-            key={device.deviceId}
-            title={title}
-            subtitle={subtitle}
-            accessories={accessoryText ? [{ text: accessoryText }] : []}
-            icon={{ source: iconSource, tintColor: iconTint }}
-            actions={<ActionPanel>{renderActionsForDevice(device, ui)}</ActionPanel>}
-          />
-        );
-      })}
+            const iconSource = iconForKind(kind);
+            return (
+              <List.Item
+                key={device.deviceId}
+                title={title}
+                subtitle={subtitle}
+                accessories={accessoryText ? [{ text: accessoryText }] : []}
+                icon={{ source: iconSource, tintColor: iconTint }}
+                actions={<ActionPanel>{renderActionsForDevice(device, ui)}</ActionPanel>}
+              />
+            );
+          })
+        : null}
     </List>
   );
 }
