@@ -1,13 +1,4 @@
-import {
-  ActionPanel,
-  Color,
-  List,
-  LocalStorage,
-  Toast,
-  getPreferenceValues,
-  open,
-  showToast,
-} from "@raycast/api";
+import { ActionPanel, Color, List, LocalStorage, Toast, getPreferenceValues, open, showToast } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useCallback, useMemo } from "react";
 
@@ -148,7 +139,7 @@ export default function ListDevicesCommand() {
       }
     }
     await LocalStorage.removeItem(STORAGE_SESSION_TOKEN_KEY);
-    await revalidate();
+    revalidate();
   }, [brokerBaseUrl, revalidate]);
 
   const { renderActionsForDevice } = useDeviceActions({
@@ -222,11 +213,7 @@ export default function ListDevicesCommand() {
             subtitle={subtitle}
             accessories={accessoryText ? [{ text: accessoryText }] : []}
             icon={{ source: iconSource, tintColor: iconTint }}
-            actions={
-              <ActionPanel>
-                {renderActionsForDevice(device, ui)}
-              </ActionPanel>
-            }
+            actions={<ActionPanel>{renderActionsForDevice(device, ui)}</ActionPanel>}
           />
         );
       })}

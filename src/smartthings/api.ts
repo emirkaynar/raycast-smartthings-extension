@@ -97,7 +97,12 @@ export async function setSwitchLevel(accessToken: string, deviceId: string, leve
   });
 }
 
-export async function setColorControl(accessToken: string, deviceId: string, hue: number, saturation: number): Promise<void> {
+export async function setColorControl(
+  accessToken: string,
+  deviceId: string,
+  hue: number,
+  saturation: number,
+): Promise<void> {
   const url = `https://api.smartthings.com/v1/devices/${encodeURIComponent(deviceId)}/commands`;
   const init = (commands: unknown) => ({
     method: "POST",
@@ -111,7 +116,10 @@ export async function setColorControl(accessToken: string, deviceId: string, hue
 
   // Prefer a single command (less likely to produce partial-failure HTTP 424).
   try {
-    await fetchJson(url, init([{ component: "main", capability: "colorControl", command: "setColor", arguments: [{ hue, saturation }] }]));
+    await fetchJson(
+      url,
+      init([{ component: "main", capability: "colorControl", command: "setColor", arguments: [{ hue, saturation }] }]),
+    );
     return;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -138,7 +146,9 @@ export async function setColorTemperature(accessToken: string, deviceId: string,
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      commands: [{ component: "main", capability: "colorTemperature", command: "setColorTemperature", arguments: [kelvin] }],
+      commands: [
+        { component: "main", capability: "colorTemperature", command: "setColorTemperature", arguments: [kelvin] },
+      ],
     }),
   });
 }

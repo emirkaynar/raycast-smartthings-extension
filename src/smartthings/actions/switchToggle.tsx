@@ -8,7 +8,8 @@ export const switchToggleAction: DeviceActionModule = {
   isAvailable: (ctx) => Boolean(ctx.accessToken && ctx.switchClient?.supports(ctx.device)),
   render: (ctx) => {
     const cachedSwitchState = ctx.ui.switchState;
-    const toggleTitle = cachedSwitchState === "on" ? "Turn Off" : cachedSwitchState === "off" ? "Turn On" : "Toggle Switch";
+    const toggleTitle =
+      cachedSwitchState === "on" ? "Turn Off" : cachedSwitchState === "off" ? "Turn On" : "Toggle Switch";
 
     return (
       <Action
@@ -16,7 +17,6 @@ export const switchToggleAction: DeviceActionModule = {
         icon={Icon.Switch}
         onAction={async () => {
           if (!ctx.switchClient) return;
-
           await showToast({ style: Toast.Style.Animated, title: "Toggling…" });
           const current = await ctx.switchClient.getState(ctx.device.deviceId);
           const next = current === "on" ? "off" : "on";

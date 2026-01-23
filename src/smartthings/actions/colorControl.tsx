@@ -14,6 +14,11 @@ export const colorControlAction: DeviceActionModule = {
     return hasHs || hasTemp;
   },
   render: (ctx) => (
-    <Action.Push title="Color Control" icon={Icon.Brush} target={<ColorControlGrid ctx={ctx} />} />
+    <Action.Push
+      title="Color Control"
+      icon={Icon.Brush}
+      shortcut={{ modifiers: ["ctrl", "shift"], key: "c" }}
+      target={<ColorControlGrid ctx={ctx} />}
+    />
   ),
 };

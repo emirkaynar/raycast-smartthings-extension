@@ -7,11 +7,7 @@ export const brightnessActions: DeviceActionModule = {
   order: 20,
   isAvailable: (ctx) => {
     // Keep existing UX requirement: brightness controls only when the device is ON.
-    return Boolean(
-      ctx.accessToken &&
-        ctx.switchLevelClient?.supports(ctx.device) &&
-        ctx.ui.switchState === "on",
-    );
+    return Boolean(ctx.accessToken && ctx.switchLevelClient?.supports(ctx.device) && ctx.ui.switchState === "on");
   },
   render: (ctx) => {
     const step = ctx.brightnessStep;
@@ -20,7 +16,7 @@ export const brightnessActions: DeviceActionModule = {
         key="brightness-up"
         title="Brightness Up"
         icon={Icon.ArrowUp}
-        shortcut={{ modifiers: ["ctrl", "alt"], key: "arrowUp" }}
+        shortcut={{ modifiers: ["ctrl", "shift"], key: "arrowUp" }}
         onAction={async () => {
           await ctx.queueBrightnessAdjust(ctx.device.deviceId, ctx.ui.level, step);
         }}
@@ -29,7 +25,7 @@ export const brightnessActions: DeviceActionModule = {
         key="brightness-down"
         title="Brightness Down"
         icon={Icon.ArrowDown}
-        shortcut={{ modifiers: ["ctrl", "alt"], key: "arrowDown" }}
+        shortcut={{ modifiers: ["ctrl", "shift"], key: "arrowDown" }}
         onAction={async () => {
           await ctx.queueBrightnessAdjust(ctx.device.deviceId, ctx.ui.level, -step);
         }}
