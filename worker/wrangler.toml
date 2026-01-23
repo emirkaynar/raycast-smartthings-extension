@@ -22,6 +22,11 @@ ST_AUTHORIZATION_URL = "https://api.smartthings.com/oauth/authorize"
 ST_SCOPES = "r:devices:* x:devices:*"
 PUBLIC_BASE_URL = "https://smartthings-auth-worker.emirkaynar.workers.dev" # used to build redirect_uri
 
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
+
 # Secrets (set via `wrangler secret put`)
 # ST_CLIENT_SECRET
 # TOKEN_ENC_KEY_B64
