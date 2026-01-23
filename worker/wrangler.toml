@@ -1,6 +1,6 @@
 name = "smartthings-auth-worker"
 main = "src/index.ts"
-compatibility_date = "2025-07-18"
+compatibility_date = "2024-01-01"
 tsconfig = "./tsconfig.json"
 
 # Bindings are set up in the Cloudflare dashboard or via `wrangler`.
