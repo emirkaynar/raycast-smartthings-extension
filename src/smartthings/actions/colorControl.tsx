@@ -1,6 +1,6 @@
 import { Action, Icon } from "@raycast/api";
 
-import type { DeviceActionContext, DeviceActionModule } from "../registry/types";
+import type { DeviceActionModule } from "../registry/types";
 import { ColorControlGrid } from "../views/ColorControlGrid";
 
 export const colorControlAction: DeviceActionModule = {

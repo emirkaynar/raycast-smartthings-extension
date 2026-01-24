@@ -117,6 +117,7 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
         if (typeof desired !== "number") return;
 
         state.inFlight = (async () => {
+          let shouldCommitAgain = false;
           try {
             if (!state.toast) {
               state.toast = await showToast({ style: Toast.Style.Animated, title: "Setting brightness…" });
@@ -154,11 +155,8 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
           } finally {
             state.inFlight = undefined;
 
-            if (state.commitAfterFlight && typeof state.target === "number") {
-              state.commitAfterFlight = false;
-              await commit();
-              return;
-            }
+            shouldCommitAgain = Boolean(state.commitAfterFlight && typeof state.target === "number");
+            state.commitAfterFlight = false;
 
             if (state.toast) {
               const toastToHide = state.toast;
@@ -173,6 +171,10 @@ export function useDeviceActions(params: UseDeviceActionsParams) {
                 }
               })();
             }
+          }
+
+          if (shouldCommitAgain) {
+            await commit();
           }
         })();
       };

@@ -1,5 +1,5 @@
 import { Action, Icon } from "@raycast/api";
-import type { DeviceActionContext, DeviceActionModule } from "../registry/types";
+import type { DeviceActionModule } from "../registry/types";
 
 export const brightnessActions: DeviceActionModule = {
   id: "brightness",
@@ -14,7 +14,7 @@ export const brightnessActions: DeviceActionModule = {
     return [
       <Action
         key="brightness-up"
-        title="Brightness Up"
+        title="Brightness up"
         icon={Icon.ArrowUp}
         shortcut={{ modifiers: ["ctrl", "shift"], key: "arrowUp" }}
         onAction={async () => {

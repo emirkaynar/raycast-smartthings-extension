@@ -22,5 +22,5 @@ export type SwitchLevelStatusResponse = {
 };
 
 export type DeviceStatusResponse = {
-  components?: Record<string, Record<string, any>>;
+  components?: Record<string, Record<string, unknown>>;
 };

@@ -18,9 +18,9 @@ export async function listSmartThingsDevices(accessToken: string): Promise<Smart
   return data.items ?? [];
 }
 
-export async function getSmartThingsDevice(accessToken: string, deviceId: string): Promise<any> {
+export async function getSmartThingsDevice(accessToken: string, deviceId: string): Promise<unknown> {
   const url = `https://api.smartthings.com/v1/devices/${encodeURIComponent(deviceId)}`;
-  return fetchJson<any>(url, {
+  return fetchJson<unknown>(url, {
     method: "GET",
     headers: {
       authorization: `Bearer ${accessToken}`,

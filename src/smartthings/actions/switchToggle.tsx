@@ -1,5 +1,5 @@
 import { Action, Icon, Toast, showToast } from "@raycast/api";
-import type { DeviceActionContext, DeviceActionModule } from "../registry/types";
+import type { DeviceActionModule } from "../registry/types";
 
 export const switchToggleAction: DeviceActionModule = {
   id: "switch-toggle",

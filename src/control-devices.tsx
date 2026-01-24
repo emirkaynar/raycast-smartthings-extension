@@ -86,7 +86,6 @@ export default function ListDevicesCommand() {
   const brokerBaseUrl = useMemo(() => normalizeBaseUrl(prefs.brokerBaseUrl), [prefs.brokerBaseUrl]);
 
   const [category, setCategory] = useCachedState<CategoryFilter>(STORAGE_CATEGORY_FILTER_KEY, "all");
-  const [lastUsedById, setLastUsedById] = useState<DeviceLastUsedMap>({});
   const [sortLastUsedById, setSortLastUsedById] = useState<DeviceLastUsedMap>({});
   const [uiHydrated, setUiHydrated] = useState(false);
 
@@ -98,7 +97,6 @@ export default function ListDevicesCommand() {
         const lastUsed = await loadDeviceLastUsed(LocalStorage);
         if (cancelled) return;
 
-        setLastUsedById(lastUsed);
         setSortLastUsedById(lastUsed);
       } finally {
         if (!cancelled) setUiHydrated(true);
@@ -171,15 +169,10 @@ export default function ListDevicesCommand() {
     revalidate();
   }, [brokerBaseUrl, revalidate]);
 
-  const onDeviceUsed = useCallback((deviceId: string, usedAtMs: number) => {
-    setLastUsedById((prev) => ({ ...prev, [deviceId]: usedAtMs }));
-  }, []);
-
   const { renderActionsForDevice } = useDeviceActions({
     brokerBaseUrl,
     accessToken,
     revalidate,
-    onDeviceUsed,
     storageSessionTokenKey: STORAGE_SESSION_TOKEN_KEY,
     onReconnect,
     onDisconnect,
@@ -269,7 +262,6 @@ export default function ListDevicesCommand() {
             const kind = getDeviceKind(device);
             const title = device.label || device.name || device.deviceId;
             const isLight = kind === "light";
-            const isSwitch = deviceHasCapability(device, "switch");
 
             const cachedSwitchState = ui.switchState;
             const accessoryText =
@@ -282,9 +274,6 @@ export default function ListDevicesCommand() {
                   : cachedSwitchState === "off"
                     ? "Off"
                     : "";
-            const toggleTitle =
-              cachedSwitchState === "on" ? "Turn Off" : cachedSwitchState === "off" ? "Turn On" : "Toggle Switch";
-
             const subtitle =
               cachedSwitchState === "on" && isLight && typeof ui.level === "number" ? `${Math.round(ui.level)}%` : "";
             const iconTint = (() => {
